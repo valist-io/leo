@@ -2,7 +2,7 @@
 
 > Leo (Low Ethereum Orbit) is an Ethereum Portal Network client. 
 
-What makes Leo different from other Portal Network clients is that it uses libp2p for the networking layer. There are several reasons behind this decision but the main driver is to make Ethereum state more accessible.
+What makes Leo different from other Portal Network clients is that it uses libp2p for the networking layer. There are [several reasons](./docs/about.md) behind this decision but the main driver is to make Ethereum state more accessible.
 
 ## Contributing
 
