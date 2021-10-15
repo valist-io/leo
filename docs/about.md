@@ -23,11 +23,11 @@ Each peer-to-peer network within the Portal Network serves a unique purpose, but
 
 ## More Protocols More Problems
 
-Each network will be implemented as an overlay on top of the existing devp2p Ethereum network. Additional protocols for peer-to-peer data sharing will be added by making use of the [uTorrent protocol](https://www.bittorrent.org/beps/bep_0029.html).
+Each network will be implemented as an overlay on top of the existing [Node Discovery Protocol v5](https://github.com/ethereum/devp2p/blob/master/discv5/discv5.md) or discv5. Additional protocols for peer-to-peer data sharing will be added by making use of the [uTorrent protocol](https://www.bittorrent.org/beps/bep_0029.html).
 
 Diving into the devp2p documentation it seems to share a lot of similarities with libp2p. There's even a comparison between the two on the [github readme](https://github.com/ethereum/devp2p#relationship-with-libp2p).
 
-The protocols built on devp2p are purpose built for Ethereum, while libp2p is considered the swiss army knife of peer-to-peer networks. The one advantage libp2p has, is a proven peer-to-peer file sharing network known as [IPFS](https://ipfs.io).
+The protocols built on discv5 are purpose built for Ethereum, while libp2p is considered the swiss army knife of peer-to-peer networks. The one advantage libp2p has, is a proven peer-to-peer file sharing network known as [IPFS](https://ipfs.io).
 
 It seems that libp2p could be a great fit for the portal network. It has a data sharing protocol called [Bitswap](https://github.com/ipfs/go-bitswap), as well as a [Kademlia DHT](https://github.com/libp2p/go-libp2p-kad-dht) and [Gossip Pubsub](https://github.com/libp2p/go-libp2p-pubsub) implementation.
 
