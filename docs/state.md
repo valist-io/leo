@@ -17,13 +17,11 @@ State data is addressed by a [CID](https://github.com/multiformats/cid) consisti
 | `eth-state-trie`       | 0x96       | Ethereum State Trie (Eth-Secure-Trie)            |
 | `eth-account-snapshot` | 0x97       | Ethereum Account Snapshot (RLP)                  |
 | `eth-storage-trie`     | 0x98       | Ethereum Contract Storage Trie (Eth-Secure-Trie) |
-| `eth-receipt-log-trie` | 0x99       | Ethereum Transaction Receipt Log Trie (Eth-Trie) |
-| `eth-reciept-log`      | 0x9a       | Ethereum Transaction Receipt Log (RLP)           |
 
 There are several benefits to content addressable storage:
 
 - Duplicate data is automatically discarded because it will have the same CID.
-- Sparse state tries can be built by referencing nodes that may not be stored.
+- Sparse state tries can be built by referencing nodes that are not yet stored.
 
 ## Storage Access
 
@@ -45,4 +43,4 @@ Bridge nodes are responsible for injecting new pieces of state into the network.
 
 Each time the canonical block head is updated, bridge nodes will ask for parts of the state that have been modified. Along with the modified state nodes, a proof for each node is included.
 
-The updated nodes and proofs are added to a sparse merkle DAG addressed by the state root hash. This allows the network to start with a sparse view of the state and over time build a complete view.
+The updated nodes and proofs are added to a sparse state trie addressed by the state root hash. This allows the network to start with a sparse view of the state and over time build a complete view.
