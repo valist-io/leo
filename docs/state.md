@@ -6,19 +6,19 @@ The state network is responsible for storing recent Ethereum state. This include
 
 State data is addressed by the KECCAK 256 hash of the encoded data. A prepended [multicodec](https://github.com/multiformats/multicodec) identifier is used to distinguish the type of data.
 
-| Type                 | Multicodec | Description                                      |
-| -------------------- | :--------: | ------------------------------------------------ |
-| eth-block            | 0x90       | Ethereum Header (RLP)                            |
-| eth-block-list       | 0x91       | Ethereum Header List (RLP)                       |
-| eth-tx-trie          | 0x92       | Ethereum Transaction Trie (Eth-Trie)             |
-| eth-tx               | 0x93       | Ethereum Transaction (MarshalBinary)             |
-| eth-tx-receipt-trie  | 0x94       | Ethereum Transaction Receipt Trie (Eth-Trie)     |
-| eth-tx-receipt       | 0x95       | Ethereum Transaction Receipt (MarshalBinary)     |
-| eth-state-trie       | 0x96       | Ethereum State Trie (Eth-Secure-Trie)            |
-| eth-account-snapshot | 0x97       | Ethereum Account Snapshot (RLP)                  |
-| eth-storage-trie     | 0x98       | Ethereum Contract Storage Trie (Eth-Secure-Trie) |
-| eth-receipt-log-trie | 0x99       | Ethereum Transaction Receipt Log Trie (Eth-Trie) |
-| eth-reciept-log      | 0x9a       | Ethereum Transaction Receipt Log (RLP)           |
+| Type                   | Multicodec | Encoding                                         |
+| ---------------------- | :--------: | ------------------------------------------------ |
+| `eth-block`            | 0x90       | Ethereum Header (RLP)                            |
+| `eth-block-list`       | 0x91       | Ethereum Header List (RLP)                       |
+| `eth-tx-trie`          | 0x92       | Ethereum Transaction Trie (Eth-Trie)             |
+| `eth-tx`               | 0x93       | Ethereum Transaction (MarshalBinary)             |
+| `eth-tx-receipt-trie`  | 0x94       | Ethereum Transaction Receipt Trie (Eth-Trie)     |
+| `eth-tx-receipt`       | 0x95       | Ethereum Transaction Receipt (MarshalBinary)     |
+| `eth-state-trie`       | 0x96       | Ethereum State Trie (Eth-Secure-Trie)            |
+| `eth-account-snapshot` | 0x97       | Ethereum Account Snapshot (RLP)                  |
+| `eth-storage-trie`     | 0x98       | Ethereum Contract Storage Trie (Eth-Secure-Trie) |
+| `eth-receipt-log-trie` | 0x99       | Ethereum Transaction Receipt Log Trie (Eth-Trie) |
+| `eth-reciept-log`      | 0x9a       | Ethereum Transaction Receipt Log (RLP)           |
 
 ## Storage Format
 
@@ -30,7 +30,7 @@ To retrieve the state trie node `001`, a simple IPLD query can be constructed to
 /<eth-state-trie>/0/0/1
 ```
 
-Proofs for arbitrary state can be generated with an IPLD selector. This will walk the state root returning all encountered nodes along the way.
+Proofs for arbitrary state can be generated with an [IPLD selector](https://github.com/ipld/ipld/blob/master/specs/selectors/index.md). This will walk the state root returning all encountered nodes along the way.
 
 ## Bridge Nodes
 
