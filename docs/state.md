@@ -4,7 +4,7 @@ The state network is responsible for storing recent Ethereum state. This include
 
 ## Content Addressing
 
-State data is addressed by the KECCAK 256 hash of the encoded data. A prepended [multicodec](https://github.com/multiformats/multicodec) identifier is used to distinguish the type of data.
+State data is addressed by a [CID](https://github.com/multiformats/cid) consisting of the KECCAK 256 hash of the encoded data and a prepended [multicodec](https://github.com/multiformats/multicodec) identifier used to distinguish the type of data.
 
 | Type                   | Multicodec | Encoding                                         |
 | ---------------------- | :--------: | ------------------------------------------------ |
@@ -20,17 +20,22 @@ State data is addressed by the KECCAK 256 hash of the encoded data. A prepended 
 | `eth-receipt-log-trie` | 0x99       | Ethereum Transaction Receipt Log Trie (Eth-Trie) |
 | `eth-reciept-log`      | 0x9a       | Ethereum Transaction Receipt Log (RLP)           |
 
-## Storage Format
+There are several benefits to content addressable storage:
 
-State data is accessed using an [IPLD codec](https://github.com/ipld/ipld/tree/master/specs/codecs/dag-eth). This enables retrieval of any arbitrary state data through IPLD queries.
+- Duplicate data is automatically discarded because it will have the same CID.
+- Sparse state tries can be built by referencing nodes that may not be stored.
+
+## Storage Access
+
+State data is accessed using an [IPLD codec](https://ipld.io/specs/codecs/dag-eth/). This enables retrieval of any arbitrary state data through IPLD queries.
 
 To retrieve the state trie node `001`, a simple IPLD query can be constructed to find the data location from the DHT.
 
 ```
-/<eth-state-trie>/0/0/1
+/<stateRootCID>/0/0/1
 ```
 
-Proofs for arbitrary state can be generated with an [IPLD selector](https://github.com/ipld/ipld/blob/master/specs/selectors/index.md). This will walk the state root returning all encountered nodes along the way.
+Proofs for arbitrary state can be generated with an [IPLD selector](https://ipld.io/specs/selectors/). This will walk the state root returning all encountered nodes along the way.
 
 ## Bridge Nodes
 
