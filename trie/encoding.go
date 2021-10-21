@@ -1,5 +1,4 @@
-// Package coding implements helpers for transforming data to and from Ethereum or IPLD codecs.
-package coding
+package trie
 
 import (
 	"github.com/ethereum/go-ethereum/common"
