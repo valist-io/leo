@@ -17,19 +17,20 @@ const (
 	StorageTrieCodec = cid.EthStorageTrie
 )
 
-var StateTriePrefix = cid.Prefix{
-	Version:  1,
-	Codec:    StateTrieCodec,
-	MhType:   multihash.KECCAK_256,
-	MhLength: -1,
-}
-
-var StorageTriePrefix = cid.Prefix{
-	Version:  1,
-	Codec:    StorageTrieCodec,
-	MhType:   multihash.KECCAK_256,
-	MhLength: -1,
-}
+var (
+	StateTriePrefix = cid.Prefix{
+		Version:  1,
+		Codec:    StateTrieCodec,
+		MhType:   multihash.KECCAK_256,
+		MhLength: -1,
+	}
+	StorageTriePrefix = cid.Prefix{
+		Version:  1,
+		Codec:    StorageTrieCodec,
+		MhType:   multihash.KECCAK_256,
+		MhLength: -1,
+	}
+)
 
 // Decode decodes the given data into an IPLD node.
 func Decode(codec uint64, data []byte) (ipld.Node, error) {

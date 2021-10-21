@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -33,45 +34,45 @@ func NewTrie(store Storage) *Trie {
 	return &Trie{lsys}
 }
 
-// AddState adds a state trie node to the DHT.
+// AddState adds a state node to the trie and returns the node CID.
 func (t *Trie) AddState(ctx context.Context, rlp []byte) (string, error) {
-	node, err := Decode(StateTrieCodec, rlp)
-	if err != nil {
-		return "", err
-	}
-
-	lc := linking.LinkContext{Ctx: ctx}
-	lp := cidlink.LinkPrototype{StateTriePrefix}
-
-	lnk, err := t.lsys.Store(lc, lp, node)
-	if err != nil {
-		return "", err
-	}
-
-	return lnk.String(), nil
+	return t.add(ctx, rlp, StateTriePrefix)
 }
 
-// AddStorage adds a storage trie node to the DHT.
+// AddStorage adds a storage node to the trie and returns the node CID.
 func (t *Trie) AddStorage(ctx context.Context, rlp []byte) (string, error) {
-	node, err := Decode(StorageTrieCodec, rlp)
-	if err != nil {
-		return "", err
-	}
-
-	lc := linking.LinkContext{Ctx: ctx}
-	lp := cidlink.LinkPrototype{StorageTriePrefix}
-
-	lnk, err := t.lsys.Store(lc, lp, node)
-	if err != nil {
-		return "", err
-	}
-
-	return lnk.String(), nil
+	return t.add(ctx, rlp, StorageTriePrefix)
 }
 
 // GetState returns the value of the state node at the given path anchored by the given root.
 func (t *Trie) GetState(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
-	cid := Keccak256ToCid(StateTrieCodec, root)
+	return t.get(ctx, root, path, StateTrieCodec)
+}
+
+// GetStorage returns the value of the storage node at the given path acnchored by the given root.
+func (t *Trie) GetStorage(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
+	return t.get(ctx, root, path, StorageTrieCodec)
+}
+
+func (t *Trie) add(ctx context.Context, rlp []byte, prefix cid.Prefix) (string, error) {
+	node, err := Decode(prefix.Codec, rlp)
+	if err != nil {
+		return "", err
+	}
+
+	lc := linking.LinkContext{Ctx: ctx}
+	lp := cidlink.LinkPrototype{prefix}
+
+	lnk, err := t.lsys.Store(lc, lp, node)
+	if err != nil {
+		return "", err
+	}
+
+	return lnk.String(), nil
+}
+
+func (t *Trie) get(ctx context.Context, root, path common.Hash, codec uint64) (ipld.Node, error) {
+	cid := Keccak256ToCid(codec, root)
 	lnk := cidlink.Link{Cid: cid}
 
 	lc := linking.LinkContext{Ctx: ctx}
