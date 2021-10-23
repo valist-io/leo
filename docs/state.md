@@ -1,6 +1,6 @@
 # State Network
 
-The state network is responsible for storing recent Ethereum state. This includes account balances, contract byte code, and contract storage.
+> The state network is responsible for storing recent Ethereum state. This includes account balances, contract byte code, and contract storage.
 
 ## Content Addressing
 
@@ -34,13 +34,3 @@ To retrieve the state trie node `001`, a simple IPLD query can be constructed to
 ```
 
 Proofs for arbitrary state can be generated with an [IPLD selector](https://ipld.io/specs/selectors/). This will walk the state root returning all encountered nodes along the way.
-
-## Bridge Nodes
-
-Bridge nodes are responsible for injecting new pieces of state into the network. They do so by retrieving new state from an existing Ethereum full-node.
-
-> The specification for the bridge RPC can be found [here](https://github.com/ethereum/portal-network-specs/blob/master/portal-bridge-nodes.md). 
-
-Each time the canonical block head is updated, bridge nodes will ask for parts of the state that have been modified. Along with the modified state nodes, a proof for each node is included.
-
-The updated nodes and proofs are added to a sparse state trie addressed by the state root hash. This allows the network to start with a sparse view of the state and over time build a complete view.
