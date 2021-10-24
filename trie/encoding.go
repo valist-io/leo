@@ -62,6 +62,16 @@ func Keccak256ToCid(codec uint64, hash common.Hash) cid.Cid {
 	return cid.NewCidV1(codec, multihash.Multihash(enc))
 }
 
+// CidToKeccak256 returns the keccak hash from the given CID.
+func CidToKeccak256(id cid.Cid) []byte {
+	dec, err := multihash.Decode(id.Hash())
+	if err != nil {
+		panic(err)
+	}
+
+	return dec.Digest
+}
+
 // KeyToHex transforms key bytes to hex encoding.
 func KeyToHex(key []byte) []byte {
 	var hex = make([]byte, len(key)*2+1)
