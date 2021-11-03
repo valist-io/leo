@@ -12,29 +12,18 @@ import (
 	_ "github.com/vulcanize/go-codec-dageth/storage_trie"
 )
 
-const (
-	StateTrieCodec   = cid.EthStateTrie
-	StorageTrieCodec = cid.EthStorageTrie
-)
+const Codec = cid.EthStateTrie
 
-var (
-	StateTriePrefix = cid.Prefix{
-		Version:  1,
-		Codec:    StateTrieCodec,
-		MhType:   multihash.KECCAK_256,
-		MhLength: -1,
-	}
-	StorageTriePrefix = cid.Prefix{
-		Version:  1,
-		Codec:    StorageTrieCodec,
-		MhType:   multihash.KECCAK_256,
-		MhLength: -1,
-	}
-)
+var Prefix = cid.Prefix{
+	Version:  1,
+	Codec:    Codec,
+	MhType:   multihash.KECCAK_256,
+	MhLength: -1,
+}
 
-// Decode decodes the given data into an IPLD node.
-func Decode(codec uint64, data []byte) (ipld.Node, error) {
-	decoder, err := multicodec.LookupDecoder(codec)
+// Decode decodes the given RLP bytes into an IPLD node.
+func Decode(data []byte) (ipld.Node, error) {
+	decoder, err := multicodec.LookupDecoder(Codec)
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +31,9 @@ func Decode(codec uint64, data []byte) (ipld.Node, error) {
 	return ipld.Decode(data, decoder)
 }
 
-// Encode encodes the given IPLD node into binary.
-func Encode(codec uint64, node ipld.Node) ([]byte, error) {
-	encoder, err := multicodec.LookupEncoder(codec)
+// Encode encodes the given IPLD node into RLP bytes.
+func Encode(node ipld.Node) ([]byte, error) {
+	encoder, err := multicodec.LookupEncoder(Codec)
 	if err != nil {
 		return nil, err
 	}
@@ -53,13 +42,13 @@ func Encode(codec uint64, node ipld.Node) ([]byte, error) {
 }
 
 // Keccak256ToCid returns a CID consisting of the given hash and codec.
-func Keccak256ToCid(codec uint64, hash common.Hash) cid.Cid {
+func Keccak256ToCid(hash common.Hash) cid.Cid {
 	enc, err := multihash.Encode(hash.Bytes(), multihash.KECCAK_256)
 	if err != nil {
 		panic(err)
 	}
 
-	return cid.NewCidV1(codec, multihash.Multihash(enc))
+	return cid.NewCidV1(Codec, multihash.Multihash(enc))
 }
 
 // CidToKeccak256 returns the keccak hash from the given CID.

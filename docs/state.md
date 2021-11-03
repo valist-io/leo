@@ -23,14 +23,14 @@ There are several benefits to content addressable storage:
 - Duplicate data is automatically discarded because it will have the same CID.
 - Sparse state tries can be built by referencing nodes that are not yet stored.
 
-## Storage Access
+## Storage
 
-State data is accessed using an [IPLD codec](https://ipld.io/specs/codecs/dag-eth/). This enables retrieval of any arbitrary state data through IPLD queries.
-
-To retrieve the state trie node `001`, a simple IPLD query can be constructed to find the data location from the DHT.
-
-```
-/<stateRootCID>/0/0/1
-```
+State data is accessed using an [IPLD codec](https://ipld.io/specs/codecs/dag-eth/). To retrieve a state value the root of the state trie can be queried using the state root CID.
 
 Proofs for arbitrary state can be generated with an [IPLD selector](https://ipld.io/specs/selectors/). This will walk the state root returning all encountered nodes along the way.
+
+Each client is responsible for defining how many blocks to store. This allows for a wide variety of use-cases:
+
+- Desktop clients storing a full archive
+- Browser clients storing only the latest block
+- Mobile clients storing a snapshot to quickly update from

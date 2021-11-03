@@ -3,21 +3,22 @@ module github.com/valist-io/leo
 go 1.16
 
 require (
-	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/ethereum/go-ethereum v1.10.10
-	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/ipfs/go-block-format v0.0.3
 	github.com/ipfs/go-cid v0.0.7
-	github.com/ipfs/go-ipfs-blockstore v1.0.4
+	github.com/ipfs/go-datastore v0.4.6
+	github.com/ipfs/go-ipfs-blockstore v1.0.4 // indirect
+	github.com/ipfs/go-ipfs-provider v0.6.1
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211018101421-492705d1efdc
-	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
+	github.com/libp2p/go-libp2p v0.15.0
+	github.com/libp2p/go-libp2p-connmgr v0.2.4
+	github.com/libp2p/go-libp2p-core v0.9.0
+	github.com/libp2p/go-libp2p-kad-dht v0.13.1
+	github.com/libp2p/go-libp2p-noise v0.2.2
+	github.com/libp2p/go-libp2p-quic-transport v0.12.0 // indirect
+	github.com/libp2p/go-libp2p-tls v0.2.0
 	github.com/multiformats/go-multihash v0.0.15
-	github.com/onsi/ginkgo v1.16.4 // indirect
-	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/textileio/go-ds-badger3 v0.0.0-20210324034212-7b7fb3be3d1c
 	github.com/vulcanize/go-codec-dageth v0.0.0-20211018155821-ba8a8409fd74
-	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e // indirect
-	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/text v0.3.7 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

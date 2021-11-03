@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
@@ -34,34 +33,15 @@ func NewTrie(store Storage) *Trie {
 	return &Trie{lsys}
 }
 
-// AddState adds a state node to the trie and returns the node CID.
-func (t *Trie) AddState(ctx context.Context, rlp []byte) (string, error) {
-	return t.add(ctx, rlp, StateTriePrefix)
-}
-
-// AddStorage adds a storage node to the trie and returns the node CID.
-func (t *Trie) AddStorage(ctx context.Context, rlp []byte) (string, error) {
-	return t.add(ctx, rlp, StorageTriePrefix)
-}
-
-// GetState returns the value of the state node at the given path anchored by the given root.
-func (t *Trie) GetState(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
-	return t.get(ctx, root, path, StateTrieCodec)
-}
-
-// GetStorage returns the value of the storage node at the given path acnchored by the given root.
-func (t *Trie) GetStorage(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
-	return t.get(ctx, root, path, StorageTrieCodec)
-}
-
-func (t *Trie) add(ctx context.Context, rlp []byte, prefix cid.Prefix) (string, error) {
-	node, err := Decode(prefix.Codec, rlp)
+// Add adds a node to the trie and returns the node CID.
+func (t *Trie) Add(ctx context.Context, rlp []byte) (string, error) {
+	node, err := Decode(rlp)
 	if err != nil {
 		return "", err
 	}
 
 	lc := linking.LinkContext{Ctx: ctx}
-	lp := cidlink.LinkPrototype{prefix}
+	lp := cidlink.LinkPrototype{Prefix}
 
 	lnk, err := t.lsys.Store(lc, lp, node)
 	if err != nil {
@@ -71,8 +51,9 @@ func (t *Trie) add(ctx context.Context, rlp []byte, prefix cid.Prefix) (string, 
 	return lnk.String(), nil
 }
 
-func (t *Trie) get(ctx context.Context, root, path common.Hash, codec uint64) (ipld.Node, error) {
-	cid := Keccak256ToCid(codec, root)
+// Get returns the value of the node at the given path anchored by the given root.
+func (t *Trie) Get(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
+	cid := Keccak256ToCid(root)
 	lnk := cidlink.Link{Cid: cid}
 
 	lc := linking.LinkContext{Ctx: ctx}

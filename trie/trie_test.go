@@ -40,12 +40,12 @@ func TestAddState(t *testing.T) {
 	require.NoError(t, err, "failed to get account proof")
 
 	for _, node := range proof {
-		_, err = trie.AddState(ctx, node)
+		_, err = trie.Add(ctx, node)
 		require.NoError(t, err, "failed to update state")
 	}
 
 	hash := crypto.Keccak256(addresses[100].Bytes())
-	node, err := trie.GetState(ctx, root, common.BytesToHash(hash))
+	node, err := trie.Get(ctx, root, common.BytesToHash(hash))
 	require.NoError(t, err, "failed to get state")
 
 	accountNode, err := node.LookupByString("Account")
