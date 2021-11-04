@@ -1,4 +1,4 @@
-// Package trie implements functions for reading and writing modified merkle patricia trees stored in a distributed hash table.
+// Package trie implements functions for reading and writing modified merkle patricia trees.
 package trie
 
 import (
@@ -7,17 +7,24 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	cid "github.com/ipfs/go-cid"
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/storage"
+	multihash "github.com/multiformats/go-multihash"
 	dageth "github.com/vulcanize/go-codec-dageth"
+	_ "github.com/vulcanize/go-codec-dageth/state_trie"
+	_ "github.com/vulcanize/go-codec-dageth/storage_trie"
+
+	"github.com/valist-io/leo/util"
 )
 
-type Storage interface {
-	storage.ReadableStorage
-	storage.WritableStorage
+var Prefix = cid.Prefix{
+	Version:  1,
+	Codec:    cid.EthStateTrie,
+	MhType:   multihash.KECCAK_256,
+	MhLength: -1,
 }
 
 // Trie is a modified merkle patricia trie stored in a distributed hash table.
@@ -26,16 +33,13 @@ type Trie struct {
 }
 
 // NewTrie returns a trie backed by the given storage.
-func NewTrie(store Storage) *Trie {
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(store)
-	lsys.SetReadStorage(store)
+func NewTrie(lsys linking.LinkSystem) *Trie {
 	return &Trie{lsys}
 }
 
 // Add adds a node to the trie and returns the node CID.
 func (t *Trie) Add(ctx context.Context, rlp []byte) (string, error) {
-	node, err := Decode(rlp)
+	node, err := util.RlpToIpld(rlp)
 	if err != nil {
 		return "", err
 	}
@@ -53,8 +57,8 @@ func (t *Trie) Add(ctx context.Context, rlp []byte) (string, error) {
 
 // Get returns the value of the node at the given path anchored by the given root.
 func (t *Trie) Get(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
-	cid := Keccak256ToCid(root)
-	lnk := cidlink.Link{Cid: cid}
+	rid := util.Keccak256ToCid(root)
+	lnk := cidlink.Link{Cid: rid}
 
 	lc := linking.LinkContext{Ctx: ctx}
 	np := dageth.Type.TrieNode
@@ -64,7 +68,7 @@ func (t *Trie) Get(ctx context.Context, root, path common.Hash) (ipld.Node, erro
 		return nil, err
 	}
 
-	leafNode, err := t.traverse(ctx, rootNode, KeyToHex(path.Bytes()))
+	leafNode, err := t.traverse(ctx, rootNode, util.KeyToHex(path.Bytes()))
 	if err != nil {
 		return nil, err
 	}

@@ -98,7 +98,7 @@ func (b *Bridge) loopAccount() {
 
 // processHeader gets the modified accounts for a header and puts them in the account channel.
 func (b *Bridge) processHeader(header *types.Header) error {
-	log.Printf("process header number=%d root=%s", header.Number, header.Root)
+	// log.Printf("new state root=%s", util.Keccak256ToCid(header.Root).String())
 
 	accounts, err := b.client.GetModifiedAccounts(context.Background(), header.Number, nil)
 	if err != nil {
@@ -114,7 +114,7 @@ func (b *Bridge) processHeader(header *types.Header) error {
 
 // processAccount gets a proof for an account and adds the nodes to the state trie.
 func (b *Bridge) processAccount(account common.Address, number *big.Int) error {
-	log.Printf("process account address=%s number=%d", account, number)
+	// log.Printf("process account %x", crypto.Keccak256(account.Bytes()))
 
 	result, err := b.client.GetProof(context.Background(), account, nil, number)
 	if err != nil {

@@ -4,11 +4,13 @@ go 1.16
 
 require (
 	github.com/ethereum/go-ethereum v1.10.10
+	github.com/ipfs/go-bitswap v0.3.4
 	github.com/ipfs/go-block-format v0.0.3
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-datastore v0.4.6
-	github.com/ipfs/go-ipfs-blockstore v1.0.4 // indirect
-	github.com/ipfs/go-ipfs-provider v0.6.1
+	github.com/ipfs/go-graphsync v0.10.5
+	github.com/ipfs/go-ipfs-blockstore v1.0.4
+	github.com/ipfs/go-ipfs-exchange-interface v0.0.1
 	github.com/ipld/go-ipld-prime v0.12.4-0.20211018101421-492705d1efdc
 	github.com/libp2p/go-libp2p v0.15.0
 	github.com/libp2p/go-libp2p-connmgr v0.2.4

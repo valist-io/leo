@@ -4,19 +4,28 @@ import (
 	"context"
 	"time"
 
+	datastore "github.com/ipfs/go-datastore"
 	libp2p "github.com/libp2p/go-libp2p"
 	connmgr "github.com/libp2p/go-libp2p-connmgr"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	dualdht "github.com/libp2p/go-libp2p-kad-dht/dual"
 	noise "github.com/libp2p/go-libp2p-noise"
 	libp2ptls "github.com/libp2p/go-libp2p-tls"
 )
 
-func NewHost(ctx context.Context, priv crypto.PrivKey) (host.Host, routing.Routing, error) {
+func NewHost(ctx context.Context, priv crypto.PrivKey, ds datastore.Batching) (host.Host, routing.Routing, error) {
 	var router routing.Routing
 	var err error
+
+	dhtopts := []dualdht.Option{
+		// dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
+		dualdht.DHTOption(dht.Concurrency(10)),
+		dualdht.DHTOption(dht.Mode(dht.ModeAuto)),
+		dualdht.DHTOption(dht.Datastore(ds)),
+	}
 
 	host, err := libp2p.New(ctx,
 		// Use the keypair we generated
@@ -43,7 +52,7 @@ func NewHost(ctx context.Context, priv crypto.PrivKey) (host.Host, routing.Routi
 		libp2p.NATPortMap(),
 		// Let this host use the DHT to find other hosts
 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-			router, err = dht.New(ctx, h)
+			router, err = dualdht.New(ctx, h, dhtopts...)
 			return router, err
 		}),
 		// Let this host use relays and advertise itself on relays if
