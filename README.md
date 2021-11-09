@@ -1,8 +1,8 @@
-# LEO
+# LEO (Low Ethereum Orbit)
 
-> LEO (Low Ethereum Orbit) is an Ethereum Portal Network client. 
+> LEO is a [Ethereum Portal Network](https://github.com/ethereum/portal-network-specs) client built on libp2p.
 
-What makes LEO different from other Portal Network clients is that it uses libp2p for the networking layer. There are [several reasons](./docs/about.md) behind this decision but the main driver is to make Ethereum state more accessible.
+LEO makes Ethereum state more accessible by distributing it on a peer-to-peer network. This enables access to the full Ethereum state without the need for a centralized RPC provider.
 
 ## Contributing
 
