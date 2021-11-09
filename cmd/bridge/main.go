@@ -2,77 +2,48 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
-	bitswap "github.com/ipfs/go-bitswap"
-	bsnet "github.com/ipfs/go-bitswap/network"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	badger "github.com/textileio/go-ds-badger3"
-
 	"github.com/valist-io/leo/bridge"
-	"github.com/valist-io/leo/p2p"
-	"github.com/valist-io/leo/store"
-	"github.com/valist-io/leo/trie"
+	"github.com/valist-io/leo/config"
+	"github.com/valist-io/leo/node"
 )
 
 func main() {
-	homePath, err := os.UserHomeDir()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to get home dir: %v", err)
 	}
 
-	rootPath := filepath.Join(homePath, ".leo")
-	dataPath := filepath.Join(rootPath, "datastore")
-
-	if err := os.MkdirAll(rootPath, 0755); err != nil {
-		panic(err)
+	if err := config.Initialize(home); err != nil {
+		log.Fatalf("failed to initialize config: %v", err)
 	}
 
-	priv, _, err := crypto.GenerateKeyPair(crypto.Ed25519, -1)
+	cfg := config.NewConfig(home)
+	if err := cfg.Load(); err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+
+	nd, err := node.New(ctx, cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to create leo node: %v", err)
 	}
 
-	dstore, err := badger.NewDatastore(dataPath, nil)
-	if err != nil {
-		panic(err)
-	}
-
-	host, router, err := p2p.NewHost(context.TODO(), priv, dstore)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("/ip4/127.0.0.1/tcp/9000/p2p/%s\n", host.ID().Pretty())
-
-	bstore := blockstore.NewBlockstore(dstore)
-	bstore = blockstore.NewIdStore(bstore)
-
-	net := bsnet.NewFromIpfsHost(host, router)
-	exc := bitswap.New(context.TODO(), net, bstore)
-
-	store := store.NewStore(bstore, exc)
-	trie := trie.NewTrie(store.LinkSystem())
-
-	client, err := bridge.NewClient(context.TODO(), os.Args[1])
-	if err != nil {
-		panic(err)
-	}
-
-	bridge := bridge.NewBridge(client, trie)
-	defer bridge.Close()
-
-	if err := bridge.Run(context.TODO()); err != nil {
-		panic(err)
-	}
+	go func() {
+		if err := bridge.Start(ctx, cfg.EthereumRPC, nd.Database()); err != nil {
+			log.Fatalf("failed to start bridge: %v", err)
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
-	fmt.Println("Shutting down")
+	log.Println("Shutting down")
 }

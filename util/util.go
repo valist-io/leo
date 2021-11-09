@@ -3,30 +3,8 @@ package util
 import (
 	"github.com/ethereum/go-ethereum/common"
 	cid "github.com/ipfs/go-cid"
-	ipld "github.com/ipld/go-ipld-prime"
-	"github.com/ipld/go-ipld-prime/multicodec"
 	multihash "github.com/multiformats/go-multihash"
 )
-
-// RlpToIpld encodes the given RLP bytes into an IPLD node.
-func RlpToIpld(data []byte) (ipld.Node, error) {
-	decoder, err := multicodec.LookupDecoder(cid.EthStateTrie)
-	if err != nil {
-		return nil, err
-	}
-
-	return ipld.Decode(data, decoder)
-}
-
-// IpldToRlp encodes the given IPLD node into RLP bytes.
-func IpldToRlp(node ipld.Node) ([]byte, error) {
-	encoder, err := multicodec.LookupEncoder(cid.EthStateTrie)
-	if err != nil {
-		return nil, err
-	}
-
-	return ipld.Encode(node, encoder)
-}
 
 // Keccak256ToCid returns a CID consisting of the given hash and codec.
 func Keccak256ToCid(hash common.Hash) cid.Cid {

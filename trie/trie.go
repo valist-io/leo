@@ -1,4 +1,4 @@
-// Package trie implements functions for reading and writing modified merkle patricia trees.
+// Package trie implements functions for traversing modified merkle patricia trees.
 package trie
 
 import (
@@ -7,72 +7,35 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	cid "github.com/ipfs/go-cid"
-	"github.com/ipld/go-ipld-prime"
+	ipld "github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/datamodel"
-	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	multihash "github.com/multiformats/go-multihash"
-	dageth "github.com/vulcanize/go-codec-dageth"
-	_ "github.com/vulcanize/go-codec-dageth/state_trie"
-	_ "github.com/vulcanize/go-codec-dageth/storage_trie"
 
+	"github.com/valist-io/leo/database"
 	"github.com/valist-io/leo/util"
 )
 
-var Prefix = cid.Prefix{
-	Version:  1,
-	Codec:    cid.EthStateTrie,
-	MhType:   multihash.KECCAK_256,
-	MhLength: -1,
-}
-
-// Trie is a modified merkle patricia trie stored in a distributed hash table.
+// Trie is a modified merkle patricia trie.
 type Trie struct {
-	lsys linking.LinkSystem
+	db *database.Database
+	rn ipld.Node
 }
 
-// NewTrie returns a trie backed by the given storage.
-func NewTrie(lsys linking.LinkSystem) *Trie {
-	return &Trie{lsys}
-}
-
-// Add adds a node to the trie and returns the node CID.
-func (t *Trie) Add(ctx context.Context, rlp []byte) (string, error) {
-	node, err := util.RlpToIpld(rlp)
+// NewTrie returns a trie anchored to the root with the given hash.
+func NewTrie(ctx context.Context, root common.Hash, db *database.Database) (*Trie, error) {
+	rn, err := db.ReadTrieNode(ctx, util.Keccak256ToCid(root))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	lc := linking.LinkContext{Ctx: ctx}
-	lp := cidlink.LinkPrototype{Prefix}
-
-	lnk, err := t.lsys.Store(lc, lp, node)
-	if err != nil {
-		return "", err
-	}
-
-	return lnk.String(), nil
+	return &Trie{db, rn}, nil
 }
 
 // Get returns the value of the node at the given path anchored by the given root.
-func (t *Trie) Get(ctx context.Context, root, path common.Hash) (ipld.Node, error) {
-	rid := util.Keccak256ToCid(root)
-	lnk := cidlink.Link{Cid: rid}
-
-	lc := linking.LinkContext{Ctx: ctx}
-	np := dageth.Type.TrieNode
-
-	rootNode, err := t.lsys.Load(lc, lnk, np)
+func (t *Trie) Get(ctx context.Context, path common.Hash) (ipld.Node, error) {
+	leafNode, err := t.traverse(ctx, t.rn, util.KeyToHex(path.Bytes()))
 	if err != nil {
 		return nil, err
 	}
-
-	leafNode, err := t.traverse(ctx, rootNode, util.KeyToHex(path.Bytes()))
-	if err != nil {
-		return nil, err
-	}
-
 	return leafNode.LookupByString("Value")
 }
 
@@ -80,22 +43,18 @@ func (t *Trie) traverse(ctx context.Context, node ipld.Node, key []byte) (ipld.N
 	if len(key) == 0 {
 		return node, nil
 	}
-
 	leafNode, err := node.LookupByString("TrieLeafNode")
 	if err == nil {
 		return t.traverseLeaf(ctx, leafNode, key)
 	}
-
 	branchNode, err := node.LookupByString("TrieBranchNode")
 	if err == nil {
 		return t.traverseBranch(ctx, branchNode, key)
 	}
-
 	extensionNode, err := node.LookupByString("TrieExtensionNode")
 	if err == nil {
 		return t.traverseExtension(ctx, extensionNode, key)
 	}
-
 	return nil, fmt.Errorf("invalid trie node type")
 }
 
@@ -104,16 +63,13 @@ func (t *Trie) traverseLeaf(ctx context.Context, node ipld.Node, key []byte) (ip
 	if err != nil {
 		return nil, err
 	}
-
 	pathBytes, err := pathNode.AsBytes()
 	if err != nil {
 		return nil, err
 	}
-
 	if !bytes.Equal(pathBytes, key) {
 		return nil, fmt.Errorf("node not found")
 	}
-
 	return node, nil
 }
 
@@ -122,27 +78,21 @@ func (t *Trie) traverseExtension(ctx context.Context, node ipld.Node, key []byte
 	if err != nil {
 		return nil, err
 	}
-
 	pathBytes, err := pathNode.AsBytes()
 	if err != nil {
 		return nil, err
 	}
-
 	// TODO strip prefix first?
-
 	if !bytes.Equal(pathBytes, key) {
 		return nil, fmt.Errorf("node not found")
 	}
-
 	childNode, err := node.LookupByString("Child")
 	if err != nil {
 		return nil, err
 	}
-
 	if childNode.Kind() == datamodel.Kind_Link {
 		return t.traverseLink(ctx, childNode, key[len(pathBytes):])
 	}
-
 	return t.traverse(ctx, childNode, key[len(pathBytes):])
 }
 
@@ -151,32 +101,28 @@ func (t *Trie) traverseBranch(ctx context.Context, node ipld.Node, key []byte) (
 	if err != nil {
 		return nil, err
 	}
-
 	if childNode.Kind() == datamodel.Kind_Null {
 		return nil, fmt.Errorf("node not found")
 	}
-
 	linkNode, err := childNode.LookupByString("Link")
 	if err != nil {
 		return nil, err
 	}
-
 	return t.traverseLink(ctx, linkNode, key[1:])
 }
 
 func (t *Trie) traverseLink(ctx context.Context, node ipld.Node, key []byte) (ipld.Node, error) {
-	link, err := node.AsLink()
+	lnk, err := node.AsLink()
 	if err != nil {
 		return nil, err
 	}
-
-	lc := linking.LinkContext{Ctx: ctx}
-	lp := dageth.Type.TrieNode
-
-	nextNode, err := t.lsys.Load(lc, link, lp)
+	asCidLink, ok := lnk.(cidlink.Link)
+	if !ok {
+		return nil, fmt.Errorf("unsupported link type")
+	}
+	nextNode, err := t.db.ReadTrieNode(ctx, asCidLink.Cid)
 	if err != nil {
 		return nil, err
 	}
-
 	return t.traverse(ctx, nextNode, key)
 }

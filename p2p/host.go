@@ -21,7 +21,6 @@ func NewHost(ctx context.Context, priv crypto.PrivKey, ds datastore.Batching) (h
 	var err error
 
 	dhtopts := []dualdht.Option{
-		// dualdht.DHTOption(dht.NamespacedValidator("pk", record.PublicKeyValidator{})),
 		dualdht.DHTOption(dht.Concurrency(10)),
 		dualdht.DHTOption(dht.Mode(dht.ModeAuto)),
 		dualdht.DHTOption(dht.Datastore(ds)),
