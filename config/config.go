@@ -27,7 +27,7 @@ type Config struct {
 // Init creates a config with default settings if one does not exist.
 func Init(path string) (*Config, error) {
 	cfg := &Config{
-		BridgeRPC:     "~/Library/Ethereum/geth.ipc",
+		BridgeRPC:     "ws://localhost:8546",
 		BridgeWorkers: 8,
 		rootPath:      filepath.Join(path, rootDir),
 	}

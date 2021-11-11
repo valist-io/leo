@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"log"
 	"math/big"
 
 	ethereum "github.com/ethereum/go-ethereum"
@@ -35,11 +36,15 @@ func (n *Node) bridgeMainLoop(ctx context.Context, sub ethereum.Subscription) er
 	for {
 		select {
 		case header := <-n.headCh:
+			log.Printf("new chain head: %d", header.Number)
 			// add the header and publish to gossip sub
-			n.AddHeader(ctx, header)
+			if err := n.AddHeader(ctx, header); err != nil {
+				log.Printf("failed to add header: %v", err)
+			}
 			// get a list of modified accounts
 			accounts, err := n.rpc.GetModifiedAccounts(ctx, header.Number, nil)
 			if err != nil {
+				log.Printf("failed to get modified accounts: %v", err)
 				continue
 			}
 			// put the accounts in the channel to process
@@ -63,6 +68,7 @@ func (n *Node) bridgeWorkLoop(ctx context.Context) error {
 			// get the account proof
 			result, err := n.rpc.GetProof(ctx, acct.address, nil, acct.number)
 			if err != nil {
+				log.Printf("failed to get account proof: %v", err)
 				continue
 			}
 			// add each trie node from the proof to the database

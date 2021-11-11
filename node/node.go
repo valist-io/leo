@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -80,9 +81,17 @@ func New(ctx context.Context, cfg *config.Config) (*Node, error) {
 	}
 
 	// start the header gossip
-	go node.startHeader(ctx)
+	go func() {
+		if err := node.startHeader(ctx); err != nil {
+			log.Printf("failed to start header: %v", err)
+		}
+	}()
 	// start the bridge process
-	go node.startBridge(ctx)
+	go func() {
+		if err := node.startBridge(ctx); err != nil {
+			log.Printf("failed to start bridge: %v", err)
+		}
+	}()
 
 	return node, nil
 }

@@ -9,7 +9,7 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
-const headerTopic = "leo-header-gossip"
+const headerTopic = "leo-header"
 
 // startHeader starts the header gossip pubsub.
 func (n *Node) startHeader(ctx context.Context) error {
