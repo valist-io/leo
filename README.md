@@ -1,8 +1,16 @@
 # LEO (Low Ethereum Orbit)
 
-> LEO is a [Ethereum Portal Network](https://github.com/ethereum/portal-network-specs) client built on libp2p.
+LEO is a [Ethereum Portal Network](https://github.com/ethereum/portal-network-specs) client built on libp2p.
 
-LEO makes Ethereum state more accessible by distributing it on a peer-to-peer network. This enables access to the full Ethereum state without the need for a centralized RPC provider.
+## About
+
+LEO makes Ethereum state more accessible by distributing it on a peer-to-peer network.
+
+Ethereum state is bridged into the network from a full node and distributed via a DHT.
+
+The state data is converted into an IPLD codec and its CID is broadcasted to the network.
+
+State data is retrieved by querying the DHT for a CID and initiating a bitswap exchange.
 
 ## Contributing
 
