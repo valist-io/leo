@@ -9,14 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/crypto"
-	ipld "github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/memstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/vulcanize/go-codec-dageth/state_trie"
 
-	"github.com/valist-io/leo/database"
+	"github.com/valist-io/leo/block"
 )
 
 func TestAddState(t *testing.T) {
@@ -27,7 +25,7 @@ func TestAddState(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(&store)
 	lsys.SetReadStorage(&store)
-	db := database.NewDatabase(lsys)
+	db := block.NewDatabase(lsys)
 
 	statedb, err := state.New(common.Hash{}, state.NewDatabase(raw), nil)
 	require.NoError(t, err, "failed to create statedb")
@@ -43,10 +41,7 @@ func TestAddState(t *testing.T) {
 	require.NoError(t, err, "failed to get account proof")
 
 	for _, data := range proof {
-		node, err := ipld.Decode(data, state_trie.Decode)
-		require.NoError(t, err, "failed to decode trie node")
-
-		_, err = db.WriteTrieNode(ctx, node)
+		_, err = db.WriteTrieNode(ctx, data)
 		require.NoError(t, err, "failed to write trie node")
 	}
 

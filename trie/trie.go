@@ -11,18 +11,18 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 
-	"github.com/valist-io/leo/database"
+	"github.com/valist-io/leo/block"
 	"github.com/valist-io/leo/util"
 )
 
 // Trie is a modified merkle patricia trie.
 type Trie struct {
-	db *database.Database
+	db *block.Database
 	rn ipld.Node
 }
 
 // NewTrie returns a trie anchored to the root with the given hash.
-func NewTrie(ctx context.Context, root common.Hash, db *database.Database) (*Trie, error) {
+func NewTrie(ctx context.Context, root common.Hash, db *block.Database) (*Trie, error) {
 	rn, err := db.ReadTrieNode(ctx, util.Keccak256ToCid(root))
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func NewTrie(ctx context.Context, root common.Hash, db *database.Database) (*Tri
 	return &Trie{db, rn}, nil
 }
 
-// Get returns the value of the node at the given path anchored by the given root.
+// Get returns the value of the node at the given path.
 func (t *Trie) Get(ctx context.Context, path common.Hash) (ipld.Node, error) {
 	leafNode, err := t.traverse(ctx, t.rn, util.KeyToHex(path.Bytes()))
 	if err != nil {

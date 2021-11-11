@@ -17,6 +17,7 @@ require (
 	github.com/libp2p/go-libp2p-core v0.9.0
 	github.com/libp2p/go-libp2p-kad-dht v0.13.1
 	github.com/libp2p/go-libp2p-noise v0.2.2
+	github.com/libp2p/go-libp2p-pubsub v0.5.6 // indirect
 	github.com/libp2p/go-libp2p-quic-transport v0.12.0 // indirect
 	github.com/libp2p/go-libp2p-tls v0.2.0
 	github.com/multiformats/go-multihash v0.0.15
