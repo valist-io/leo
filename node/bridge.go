@@ -7,6 +7,8 @@ import (
 
 	ethereum "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // bridgeAcct contains info for the account worker
@@ -38,8 +40,8 @@ func (n *Node) bridgeMainLoop(ctx context.Context, sub ethereum.Subscription) er
 		case header := <-n.headCh:
 			log.Printf("new chain head: %d", header.Number)
 			// add the header and publish to gossip sub
-			if err := n.AddHeader(ctx, header); err != nil {
-				log.Printf("failed to add header: %v", err)
+			if err := n.bridgeHeader(ctx, header); err != nil {
+				log.Printf("failed to bridge header: %v", err)
 			}
 			// get a list of modified accounts
 			accounts, err := n.rpc.GetModifiedAccounts(ctx, header.Number, nil)
@@ -73,10 +75,23 @@ func (n *Node) bridgeWorkLoop(ctx context.Context) error {
 			}
 			// add each trie node from the proof to the database
 			for _, proof := range result.AccountProof {
-				n.db.WriteTrieNode(ctx, common.FromHex(proof))
+				n.blockChain.WriteTrieNode(ctx, common.FromHex(proof))
 			}
 		case <-ctx.Done():
 			return nil
 		}
 	}
+}
+
+// bridgeHeader writes the header to the database and publishes it to the header gossip.
+func (n *Node) bridgeHeader(ctx context.Context, header *types.Header) error {
+	data, err := rlp.EncodeToBytes(header)
+	if err != nil {
+		return err
+	}
+	_, err = n.blockChain.WriteHeader(ctx, data)
+	if err != nil {
+		return err
+	}
+	return n.headTo.Publish(ctx, data)
 }

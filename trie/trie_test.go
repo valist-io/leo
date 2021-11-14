@@ -25,7 +25,7 @@ func TestAddState(t *testing.T) {
 	lsys := cidlink.DefaultLinkSystem()
 	lsys.SetWriteStorage(&store)
 	lsys.SetReadStorage(&store)
-	db := block.NewDatabase(lsys)
+	blockChain := block.NewBlockChain(lsys)
 
 	statedb, err := state.New(common.Hash{}, state.NewDatabase(raw), nil)
 	require.NoError(t, err, "failed to create statedb")
@@ -41,11 +41,11 @@ func TestAddState(t *testing.T) {
 	require.NoError(t, err, "failed to get account proof")
 
 	for _, data := range proof {
-		_, err = db.WriteTrieNode(ctx, data)
+		_, err = blockChain.WriteTrieNode(ctx, data)
 		require.NoError(t, err, "failed to write trie node")
 	}
 
-	trie, err := NewTrie(ctx, root, db)
+	trie, err := NewTrie(ctx, root, blockChain)
 	require.NoError(t, err, "failed to create trie")
 
 	hash := crypto.Keccak256(address.Bytes())

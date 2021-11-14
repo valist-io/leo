@@ -25,11 +25,11 @@ func main() {
 		log.Fatalf("failed to load config: %v", err)
 	}
 
-	node, err := node.New(ctx, cfg)
+	node, err := node.NewNode(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to create leo node: %v", err)
 	}
-	log.Printf("PeerID=%s", node.PeerID())
+	node.Start(ctx)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

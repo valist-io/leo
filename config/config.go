@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"path/filepath"
 
@@ -16,6 +17,8 @@ const (
 
 type Config struct {
 	rootPath string
+	// ChainId is the chain id to return in the RPC response.
+	ChainId *big.Int
 	// BridgeRPC is the ethereum json rpc to use for bridge data.
 	BridgeRPC string `json:"bridge_rpc"`
 	// BridgeWorks is the number of bridge worker routines.
@@ -27,6 +30,7 @@ type Config struct {
 // Init creates a config with default settings if one does not exist.
 func Init(path string) (*Config, error) {
 	cfg := &Config{
+		ChainId:       big.NewInt(4),
 		BridgeRPC:     "ws://localhost:8546",
 		BridgeWorkers: 8,
 		rootPath:      filepath.Join(path, rootDir),

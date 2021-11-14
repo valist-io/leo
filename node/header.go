@@ -9,19 +9,17 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
-const headerTopic = "leo-header"
-
 // startHeader starts the header gossip pubsub.
 func (n *Node) startHeader(ctx context.Context) error {
-	err := n.ps.RegisterTopicValidator(headerTopic, headerValidator)
+	err := n.pubsub.RegisterTopicValidator(headerTopicName, headerValidator)
 	if err != nil {
 		return err
 	}
-	n.headTopic, err = n.ps.Join(headerTopic)
+	n.headTo, err = n.pubsub.Join(headerTopicName)
 	if err != nil {
 		return err
 	}
-	sub, err := n.headTopic.Subscribe()
+	sub, err := n.headTo.Subscribe()
 	if err != nil {
 		return err
 	}
@@ -38,12 +36,12 @@ func (n *Node) headerLoop(ctx context.Context, sub *pubsub.Subscription) error {
 		}
 		header := msg.ValidatorData.(*types.Header)
 		// update latest block number
-		if header.Number.Cmp(n.latest) > 0 {
-			n.latest.Set(header.Number)
+		if header.Number.Cmp(n.blockNumber) > 0 {
+			n.blockNumber.Set(header.Number)
 		}
 		// skip messages sent from self
 		if msg.ReceivedFrom != n.host.ID() {
-			n.db.WriteHeader(ctx, msg.Data)
+			n.blockChain.WriteHeader(ctx, msg.Data)
 		}
 	}
 }

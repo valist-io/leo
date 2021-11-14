@@ -17,22 +17,22 @@ import (
 
 // Trie is a modified merkle patricia trie.
 type Trie struct {
-	db *block.Database
-	rn ipld.Node
+	blockChain *block.BlockChain
+	rootNode   ipld.Node
 }
 
 // NewTrie returns a trie anchored to the root with the given hash.
-func NewTrie(ctx context.Context, root common.Hash, db *block.Database) (*Trie, error) {
-	rn, err := db.ReadTrieNode(ctx, util.Keccak256ToCid(root))
+func NewTrie(ctx context.Context, rootHash common.Hash, blockChain *block.BlockChain) (*Trie, error) {
+	rootNode, err := blockChain.ReadTrieNode(ctx, util.Keccak256ToCid(rootHash))
 	if err != nil {
 		return nil, err
 	}
-	return &Trie{db, rn}, nil
+	return &Trie{blockChain, rootNode}, nil
 }
 
 // Get returns the value of the node at the given path.
 func (t *Trie) Get(ctx context.Context, path common.Hash) (ipld.Node, error) {
-	leafNode, err := t.traverse(ctx, t.rn, util.KeyToHex(path.Bytes()))
+	leafNode, err := t.traverse(ctx, t.rootNode, util.KeyToHex(path.Bytes()))
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (t *Trie) traverseLink(ctx context.Context, node ipld.Node, key []byte) (ip
 	if !ok {
 		return nil, fmt.Errorf("unsupported link type")
 	}
-	nextNode, err := t.db.ReadTrieNode(ctx, asCidLink.Cid)
+	nextNode, err := t.blockChain.ReadTrieNode(ctx, asCidLink.Cid)
 	if err != nil {
 		return nil, err
 	}

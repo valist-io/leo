@@ -6,9 +6,8 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rlp"
-	bitswap "github.com/ipfs/go-bitswap"
-	bsnet "github.com/ipfs/go-bitswap/network"
+	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
+	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
 	"github.com/libp2p/go-libp2p-core/host"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	badger "github.com/textileio/go-ds-badger3"
@@ -19,97 +18,84 @@ import (
 	"github.com/valist-io/leo/rpc"
 )
 
+const (
+	headerTopicName = "leo-header"
+)
+
 type Node struct {
-	cfg       *config.Config
-	rpc       *rpc.Client
-	host      host.Host
-	db        *block.Database
-	ps        *pubsub.PubSub
-	latest    *big.Int
-	acctCh    chan *bridgeAcct
-	headCh    chan *types.Header
-	headTopic *pubsub.Topic
+	cfg *config.Config
+	rpc *rpc.Client
+
+	host   host.Host
+	pubsub *pubsub.PubSub
+
+	blockChain  *block.BlockChain
+	blockNumber *big.Int
+
+	acctCh chan *bridgeAcct
+	headCh chan *types.Header
+	headTo *pubsub.Topic
 }
 
-func New(ctx context.Context, cfg *config.Config) (*Node, error) {
+// NewNode initializes and returns a new node.
+func NewNode(ctx context.Context, cfg *config.Config) (*Node, error) {
 	priv, err := p2p.DecodeKey(cfg.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-
 	dstore, err := badger.NewDatastore(cfg.DataPath(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	bstore, err := block.NewStore(ctx, dstore)
-	if err != nil {
-		return nil, err
-	}
-
 	host, router, err := p2p.NewHost(ctx, priv, dstore)
 	if err != nil {
 		return nil, err
 	}
-
-	ps, err := pubsub.NewGossipSub(ctx, host)
+	pubsub, err := pubsub.NewGossipSub(ctx, host)
 	if err != nil {
 		return nil, err
 	}
-
 	rpc, err := rpc.NewClient(ctx, cfg.BridgeRPC)
 	if err != nil {
 		return nil, err
 	}
-
-	// setup bitswap exchange
-	net := bsnet.NewFromIpfsHost(host, router)
-	exc := bitswap.New(ctx, net, bstore)
-	// setup blockservice and linksystem
-	bsvc := block.NewService(bstore, exc)
-	lsys := block.NewLinkSystem(bsvc)
-
-	node := &Node{
-		cfg:    cfg,
-		rpc:    rpc,
-		host:   host,
-		db:     block.NewDatabase(lsys),
-		ps:     ps,
-		latest: big.NewInt(0),
-		acctCh: make(chan *bridgeAcct),
-		headCh: make(chan *types.Header),
+	bstore, err := block.NewBlockstore(ctx, dstore)
+	if err != nil {
+		return nil, err
 	}
 
+	bsrv := block.NewBlockService(ctx, host, router, bstore)
+	bsad := bsrvadapter.Adapter{bsrv}
+
+	lsys := cidlink.DefaultLinkSystem()
+	lsys.SetWriteStorage(&bsad)
+	lsys.SetReadStorage(&bsad)
+	lsys.TrustedStorage = true
+
+	return &Node{
+		cfg:         cfg,
+		rpc:         rpc,
+		host:        host,
+		pubsub:      pubsub,
+		blockChain:  block.NewBlockChain(lsys),
+		blockNumber: big.NewInt(-1),
+		acctCh:      make(chan *bridgeAcct),
+		headCh:      make(chan *types.Header),
+	}, nil
+}
+
+// Start starts the node network processes.
+func (n *Node) Start(ctx context.Context) {
 	// start the header gossip
 	go func() {
-		if err := node.startHeader(ctx); err != nil {
-			log.Printf("failed to start header: %v", err)
+		if err := n.startHeader(ctx); err != nil {
+			log.Printf("failed to start header process: %v", err)
 		}
 	}()
 	// start the bridge process
 	go func() {
-		if err := node.startBridge(ctx); err != nil {
-			log.Printf("failed to start bridge: %v", err)
+		if err := n.startBridge(ctx); err != nil {
+			log.Printf("failed to start bridge process: %v", err)
 		}
 	}()
-
-	return node, nil
-}
-
-// AddHeader writes the header to the database and publishes it to the header gossip.
-func (n *Node) AddHeader(ctx context.Context, header *types.Header) error {
-	data, err := rlp.EncodeToBytes(header)
-	if err != nil {
-		return err
-	}
-	_, err = n.db.WriteHeader(ctx, data)
-	if err != nil {
-		return err
-	}
-	return n.headTopic.Publish(ctx, data)
-}
-
-// PeerID returns the unique peer ID for the node.
-func (n *Node) PeerID() string {
-	return n.host.ID().Pretty()
 }
