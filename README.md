@@ -12,6 +12,26 @@ The state data is converted into an IPLD codec and its CID is broadcasted to the
 
 State data is retrieved by querying the DHT for a CID and initiating a bitswap exchange.
 
+## Running
+
+Use the provided `start-geth.sh` script to start a `go-ethereum` node.
+
+By default a local Ethereum RPC address is used. To change the RPC address edit `~/.leo/config`.
+
+Wait until the node has completed syncing before starting LEO.
+
+## Building
+
+Go 1.16 or greater is required.
+
+```sh
+git clone https://github.com/valist-io/leo.git
+
+cd leo
+
+go build ./cmd/leo
+```
+
 ## Contributing
 
 Found a bug or have a feature request? [Open an issue](https://github.com/valist-io/leo/issues/new).

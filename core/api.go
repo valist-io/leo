@@ -1,4 +1,4 @@
-package node
+package core
 
 import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -16,12 +16,12 @@ func NewPublicEthAPI(n *Node) *PublicEthAPI {
 
 // BlockNumber returns the latest blocknumber.
 func (api *PublicEthAPI) BlockNumber() string {
-	return hexutil.EncodeUint64(api.n.blockNumber.Uint64())
+	return hexutil.EncodeUint64(api.n.BlockNumber.Uint64())
 }
 
 // ChainId id of the current chain config.
 func (api *PublicEthAPI) ChainId() string {
-	return hexutil.EncodeUint64(api.n.cfg.ChainId.Uint64())
+	return hexutil.EncodeUint64(api.n.Config.ChainId.Uint64())
 }
 
 // PublicLeoAPI exposes additional leo specific methods.
@@ -36,5 +36,5 @@ func NewPublicLeoAPI(n *Node) *PublicLeoAPI {
 
 // PeerId returns the unique peer ID for the node.
 func (api *PublicLeoAPI) PeerId() string {
-	return api.n.host.ID().Pretty()
+	return api.n.Host.ID().Pretty()
 }

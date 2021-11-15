@@ -4,8 +4,8 @@ import (
 	"context"
 
 	bitswap "github.com/ipfs/go-bitswap"
-	blockservice "github.com/ipfs/go-blockservice"
 	bsnet "github.com/ipfs/go-bitswap/network"
+	blockservice "github.com/ipfs/go-blockservice"
 	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/routing"

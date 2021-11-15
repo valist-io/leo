@@ -1,11 +1,9 @@
-package node
+package core
 
 import (
 	"context"
-	"log"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/core/types"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
 	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
 	"github.com/libp2p/go-libp2p-core/host"
@@ -15,26 +13,18 @@ import (
 	"github.com/valist-io/leo/block"
 	"github.com/valist-io/leo/config"
 	"github.com/valist-io/leo/p2p"
-	"github.com/valist-io/leo/rpc"
-)
-
-const (
-	headerTopicName = "leo-header"
 )
 
 type Node struct {
-	cfg *config.Config
-	rpc *rpc.Client
+	Config *config.Config
 
-	host   host.Host
-	pubsub *pubsub.PubSub
+	Host   host.Host
+	PubSub *pubsub.PubSub
 
-	blockChain  *block.BlockChain
-	blockNumber *big.Int
+	BlockChain  *block.BlockChain
+	BlockNumber *big.Int
 
-	acctCh chan *bridgeAcct
-	headCh chan *types.Header
-	headTo *pubsub.Topic
+	HeaderTopic *pubsub.Topic
 }
 
 // NewNode initializes and returns a new node.
@@ -55,10 +45,6 @@ func NewNode(ctx context.Context, cfg *config.Config) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	rpc, err := rpc.NewClient(ctx, cfg.BridgeRPC)
-	if err != nil {
-		return nil, err
-	}
 	bstore, err := block.NewBlockstore(ctx, dstore)
 	if err != nil {
 		return nil, err
@@ -73,29 +59,10 @@ func NewNode(ctx context.Context, cfg *config.Config) (*Node, error) {
 	lsys.TrustedStorage = true
 
 	return &Node{
-		cfg:         cfg,
-		rpc:         rpc,
-		host:        host,
-		pubsub:      pubsub,
-		blockChain:  block.NewBlockChain(lsys),
-		blockNumber: big.NewInt(-1),
-		acctCh:      make(chan *bridgeAcct),
-		headCh:      make(chan *types.Header),
+		Config:      cfg,
+		Host:        host,
+		PubSub:      pubsub,
+		BlockChain:  block.NewBlockChain(lsys),
+		BlockNumber: big.NewInt(-1),
 	}, nil
-}
-
-// Start starts the node network processes.
-func (n *Node) Start(ctx context.Context) {
-	// start the header gossip
-	go func() {
-		if err := n.startHeader(ctx); err != nil {
-			log.Printf("failed to start header process: %v", err)
-		}
-	}()
-	// start the bridge process
-	go func() {
-		if err := n.startBridge(ctx); err != nil {
-			log.Printf("failed to start bridge process: %v", err)
-		}
-	}()
 }
