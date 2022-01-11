@@ -9,8 +9,6 @@ import (
 
 	"github.com/valist-io/leo/config"
 	"github.com/valist-io/leo/core"
-	"github.com/valist-io/leo/core/bridge"
-	"github.com/valist-io/leo/core/header"
 )
 
 func main() {
@@ -33,21 +31,7 @@ func main() {
 	}
 
 	log.Printf("starting node...")
-	log.Printf("peerId=%s", node.Host.ID().Pretty())
-
-	go func() {
-		log.Printf("starting header process...")
-		if err := header.Start(ctx, node); err != nil {
-			log.Fatalf("failed to start bridge process: %v", err)
-		}
-	}()
-
-	go func() {
-		log.Printf("starting bridge process...")
-		if err := bridge.Start(ctx, node); err != nil {
-			log.Fatalf("failed to start bridge process: %v", err)
-		}
-	}()
+	log.Printf("peerId=%s", node.PeerId())
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)

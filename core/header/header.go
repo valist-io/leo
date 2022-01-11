@@ -2,6 +2,7 @@ package header
 
 import (
 	"context"
+	"log"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -11,46 +12,52 @@ import (
 	"github.com/valist-io/leo/core"
 )
 
-const TopicName = "leo-header"
-
-type process struct {
-	node *core.Node
-}
+const TopicName = "/eth/header/rlp"
 
 // Start starts the header gossip process.
 func Start(ctx context.Context, node *core.Node) error {
-	err := node.PubSub.RegisterTopicValidator(TopicName, validate)
+	err := node.PubSub().RegisterTopicValidator(TopicName, validate)
 	if err != nil {
 		return err
 	}
-	node.HeaderTopic, err = node.PubSub.Join(TopicName)
+	topic, err = node.PubSub().Join(TopicName)
 	if err != nil {
 		return err
 	}
-	sub, err := node.HeaderTopic.Subscribe()
+	sub, err := topic.Subscribe()
 	if err != nil {
 		return err
 	}
-	proc := &process{node}
-	return proc.mainLoop(ctx, sub)
+	return mainLoop(ctx, node, sub)
 }
 
 // mainLoop reads headers from the gossip pubsub
 // and adds them to the local database.
-func (proc *process) mainLoop(ctx context.Context, sub *pubsub.Subscription) error {
+func mainLoop(ctx context.Context, node *core.Node, sub *pubsub.Subscription) error {
 	for {
 		msg, err := sub.Next(ctx)
 		if err != nil {
 			return err
 		}
-		header := msg.ValidatorData.(*types.Header)
-		// update latest block number
-		if header.Number.Cmp(proc.node.BlockNumber) > 0 {
-			proc.node.BlockNumber.Set(header.Number)
+		header, ok := msg.ValidatorData.(*types.Header)
+		if !ok {
+			log.Printf("invalid header")
+			continue
 		}
-		// skip messages sent from self
-		if msg.ReceivedFrom != proc.node.Host.ID() {
-			proc.node.BlockChain.WriteHeader(ctx, msg.Data)
+		err = node.PutHeader(ctx, header)
+		if err != nil {
+			log.Printf("failed to write header: %v", err)
+			continue
+		}
+		err = node.PutCanonicalHash(ctx, header.Number, header.Hash())
+		if err != nil {
+			log.Printf("failed to write canonical hash: %v", err)
+			continue
+		}
+		err = node.PutChainHead(ctx, header)
+		if err != nil {
+			log.Printf("failed to write chain head: %v", err)
+			continue
 		}
 	}
 }

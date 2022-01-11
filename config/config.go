@@ -28,8 +28,8 @@ type Config struct {
 }
 
 // Init creates a config with default settings if one does not exist.
-func Init(path string) (*Config, error) {
-	cfg := &Config{
+func Init(path string) (Config, error) {
+	cfg := Config{
 		ChainId:       big.NewInt(4),
 		BridgeRPC:     "ws://localhost:8546",
 		BridgeWorkers: 8,
@@ -39,7 +39,6 @@ func Init(path string) (*Config, error) {
 	if err := cfg.Load(); err == nil || !os.IsNotExist(err) {
 		return cfg, err
 	}
-
 	if err := os.MkdirAll(cfg.rootPath, 0755); err != nil {
 		return cfg, err
 	}
@@ -48,7 +47,6 @@ func Init(path string) (*Config, error) {
 	if err != nil {
 		return cfg, err
 	}
-
 	cfg.PrivateKey, err = p2p.EncodeKey(priv)
 	if err != nil {
 		return cfg, err
@@ -63,7 +61,6 @@ func (c *Config) Load() error {
 	if err != nil {
 		return err
 	}
-
 	return json.Unmarshal(data, c)
 }
 
@@ -73,7 +70,6 @@ func (c *Config) Save() error {
 	if err != nil {
 		return err
 	}
-
 	return os.WriteFile(c.ConfigPath(), data, 0666)
 }
 

@@ -2,42 +2,36 @@ package core
 
 import (
 	"context"
-	"math/big"
+	"sync"
 
-	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipld/go-ipld-prime/storage/bsrvadapter"
+	datastore "github.com/ipfs/go-datastore"
+	badger "github.com/ipfs/go-ds-badger"
+	blockstore "github.com/ipfs/go-ipfs-blockstore"
 	"github.com/libp2p/go-libp2p-core/host"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	badger "github.com/textileio/go-ds-badger3"
 
-	"github.com/valist-io/leo/block"
 	"github.com/valist-io/leo/config"
 	"github.com/valist-io/leo/p2p"
 )
 
 type Node struct {
-	Config *config.Config
+	config config.Config
+	mutex  sync.RWMutex
 
-	Host   host.Host
-	PubSub *pubsub.PubSub
+	host   host.Host
+	pubsub *pubsub.PubSub
 
-	BlockChain  *block.BlockChain
-	BlockNumber *big.Int
-
-	HeaderTopic *pubsub.Topic
+	dstore datastore.Datastore
+	bstore blockstore.Blockstore
 }
 
 // NewNode initializes and returns a new node.
-func NewNode(ctx context.Context, cfg *config.Config) (*Node, error) {
+func NewNode(ctx context.Context, cfg config.Config) (*Node, error) {
 	priv, err := p2p.DecodeKey(cfg.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	dstore, err := badger.NewDatastore(cfg.DataPath(), nil)
-	if err != nil {
-		return nil, err
-	}
-	host, router, err := p2p.NewHost(ctx, priv, dstore)
+	host, err := p2p.NewHost(ctx, priv)
 	if err != nil {
 		return nil, err
 	}
@@ -45,24 +39,27 @@ func NewNode(ctx context.Context, cfg *config.Config) (*Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	bstore, err := block.NewBlockstore(ctx, dstore)
+	dstore, err := badger.NewDatastore(cfg.DataPath(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	bsrv := block.NewBlockService(ctx, host, router, bstore)
-	bsad := bsrvadapter.Adapter{bsrv}
-
-	lsys := cidlink.DefaultLinkSystem()
-	lsys.SetWriteStorage(&bsad)
-	lsys.SetReadStorage(&bsad)
-	lsys.TrustedStorage = true
-
 	return &Node{
-		Config:      cfg,
-		Host:        host,
-		PubSub:      pubsub,
-		BlockChain:  block.NewBlockChain(lsys),
-		BlockNumber: big.NewInt(-1),
+		config: cfg,
+		host:   host,
+		pubsub: pubsub,
+		dstore: dstore,
+		bstore: blockstore.NewBlockstore(dstore),
 	}, nil
+}
+
+func (n *Node) Config() config.Config {
+	return n.config
+}
+
+func (n *Node) PubSub() *pubsub.PubSub {
+	return n.pubsub
+}
+
+func (n *Node) PeerId() string {
+	return n.host.ID().Pretty()
 }
