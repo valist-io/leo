@@ -2,62 +2,45 @@ package core
 
 import (
 	"context"
-	"sync"
 
-	datastore "github.com/ipfs/go-datastore"
-	badger "github.com/ipfs/go-ds-badger"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	bitswap "github.com/ipfs/go-bitswap"
+	bsnet "github.com/ipfs/go-bitswap/network"
+	blockservice "github.com/ipfs/go-blockservice"
+	flatfs "github.com/ipfs/go-ds-flatfs"
 	"github.com/libp2p/go-libp2p-core/host"
-	pubsub "github.com/libp2p/go-libp2p-pubsub"
 
 	"github.com/valist-io/leo/config"
 	"github.com/valist-io/leo/p2p"
 )
 
 type Node struct {
-	config config.Config
-	mutex  sync.RWMutex
-
-	host   host.Host
-	pubsub *pubsub.PubSub
-
-	dstore datastore.Datastore
-	bstore blockstore.Blockstore
+	host host.Host
+	bsvc blockservice.BlockService
 }
 
-// NewNode initializes and returns a new node.
 func NewNode(ctx context.Context, cfg config.Config) (*Node, error) {
+	dstore, err := flatfs.CreateOrOpen(cfg.DataPath(), flatfs.IPFS_DEF_SHARD, true)
+	if err != nil {
+		return nil, err
+	}
 	priv, err := p2p.DecodeKey(cfg.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	host, err := p2p.NewHost(ctx, priv)
+	host, router, err := p2p.NewHost(ctx, priv, dstore)
 	if err != nil {
 		return nil, err
 	}
-	pubsub, err := pubsub.NewGossipSub(ctx, host)
+	bstore, err := NewBlockstore(dstore, cfg.BridgeRPC)
 	if err != nil {
 		return nil, err
 	}
-	dstore, err := badger.NewDatastore(cfg.DataPath(), nil)
-	if err != nil {
-		return nil, err
-	}
-	return &Node{
-		config: cfg,
-		host:   host,
-		pubsub: pubsub,
-		dstore: dstore,
-		bstore: blockstore.NewBlockstore(dstore),
-	}, nil
-}
 
-func (n *Node) Config() config.Config {
-	return n.config
-}
+	network := bsnet.NewFromIpfsHost(host, router)
+	exchange := bitswap.New(ctx, network, bstore)
+	bsvc := blockservice.New(bstore, exchange)
 
-func (n *Node) PubSub() *pubsub.PubSub {
-	return n.pubsub
+	return &Node{host, bsvc}, nil
 }
 
 func (n *Node) PeerId() string {

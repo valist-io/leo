@@ -1,4 +1,4 @@
-package ethdb
+package trie
 
 import (
 	"context"
@@ -7,18 +7,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethdb"
 	blocks "github.com/ipfs/go-block-format"
-	blockstore "github.com/ipfs/go-ipfs-blockstore"
+	blockservice "github.com/ipfs/go-blockservice"
 
 	"github.com/valist-io/leo/util"
 )
 
 type Database struct {
-	bstore blockstore.Blockstore
+	bsvc   blockservice.BlockService
 	prefix uint64
 }
 
-func NewDatabase(bstore blockstore.Blockstore, prefix uint64) *Database {
-	return &Database{bstore, prefix}
+func NewDatabase(bsvc blockservice.BlockService, prefix uint64) *Database {
+	return &Database{bsvc, prefix}
 }
 
 // Has retrieves if a key is present in the key-value data store.
@@ -27,7 +27,7 @@ func (db *Database) Has(key []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return db.bstore.Has(context.Background(), id)
+	return db.bsvc.Blockstore().Has(context.Background(), id)
 }
 
 // Get retrieves the given key if it's present in the key-value data store.
@@ -36,7 +36,7 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	blk, err := db.bstore.Get(context.Background(), id)
+	blk, err := db.bsvc.GetBlock(context.Background(), id)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (db *Database) Put(key, val []byte) error {
 	if err != nil {
 		return err
 	}
-	return db.bstore.Put(context.Background(), blk)
+	return db.bsvc.AddBlock(context.Background(), blk)
 }
 
 // Delete removes the key from the key-value data store.
@@ -62,7 +62,7 @@ func (db *Database) Delete(key []byte) error {
 	if err != nil {
 		return err
 	}
-	return db.bstore.DeleteBlock(context.Background(), id)
+	return db.bsvc.DeleteBlock(context.Background(), id)
 }
 
 // Compact flattens the underlying data store for the given key range. In essence,
