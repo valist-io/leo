@@ -45,7 +45,7 @@ func (n *Node) GetHeaderByHash(ctx context.Context, hash common.Hash) (*types.He
 }
 
 func (n *Node) GetHeaderList(ctx context.Context, hash common.Hash) ([]*types.Header, error) {
-	id, err := util.Keccak256ToCid(hash, cid.EthBlock)
+	id, err := util.Keccak256ToCid(hash, cid.EthBlockList)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (n *Node) GetHeaderList(ctx context.Context, hash common.Hash) ([]*types.He
 		return nil, err
 	}
 	var list []*types.Header
-	if err := rlp.DecodeBytes(blk.RawData(), list); err != nil {
+	if err := rlp.DecodeBytes(blk.RawData(), &list); err != nil {
 		return nil, err
 	}
 	return list, nil
