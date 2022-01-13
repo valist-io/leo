@@ -9,6 +9,7 @@ import (
 
 	"github.com/valist-io/leo/config"
 	"github.com/valist-io/leo/core"
+	"github.com/valist-io/leo/rpc"
 )
 
 func main() {
@@ -29,6 +30,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create leo node: %v", err)
 	}
+
+	go rpc.ListenAndServe(node)
 
 	log.Printf("starting node...")
 	log.Printf("peerId=%s", node.PeerId())

@@ -13,7 +13,7 @@ import (
 )
 
 func (n *Node) GetBlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error) {
-	header, err := n.GetHeader(ctx, hash)
+	header, err := n.GetHeaderByHash(ctx, hash)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (n *Node) GetBlockByHash(ctx context.Context, hash common.Hash) (*types.Blo
 	return types.NewBlockWithHeader(header).WithBody(txs, uncles), nil
 }
 
-func (n *Node) GetHeader(ctx context.Context, hash common.Hash) (*types.Header, error) {
+func (n *Node) GetHeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
 	id, err := util.Keccak256ToCid(hash, cid.EthBlock)
 	if err != nil {
 		return nil, err

@@ -6,7 +6,7 @@ import (
 	bitswap "github.com/ipfs/go-bitswap"
 	bsnet "github.com/ipfs/go-bitswap/network"
 	blockservice "github.com/ipfs/go-blockservice"
-	flatfs "github.com/ipfs/go-ds-flatfs"
+	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/libp2p/go-libp2p-core/host"
 
 	"github.com/valist-io/leo/config"
@@ -19,7 +19,7 @@ type Node struct {
 }
 
 func NewNode(ctx context.Context, cfg config.Config) (*Node, error) {
-	dstore, err := flatfs.CreateOrOpen(cfg.DataPath(), flatfs.IPFS_DEF_SHARD, true)
+	dstore, err := leveldb.NewDatastore(cfg.DataPath(), nil)
 	if err != nil {
 		return nil, err
 	}
